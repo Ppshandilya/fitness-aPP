@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+logging 
+mysqlclient
+sqlalchemy
+PyMySQL
+fastapi
+uvicorn
+openai

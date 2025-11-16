@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workout Tracker Calendar</title>
+
+  <style>
+    body {
+      background-color: #0d1117;
+      color: white;
+      font-family: "Segoe UI", sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .calendar-container {
+      text-align: center;
+    }
+
+    #month-title {
+      font-size: 3rem;
+      margin-bottom: 2rem;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 60px);
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .day-box {
+      width: 50px;
+      height: 50px;
+      border-radius: 10px;
+      background-color: #161b22;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .day-box:hover {
+      transform: scale(1.2);
+      cursor: pointer;
+    }
+
+    /* Intensity colors */
+    .low-day  { background-color: #2ecc71 !important; }
+    .mid-day  { background-color: #f1c40f !important; color:black; }
+    .high-day { background-color: #e74c3c !important; }
+    .rest-day { background-color: #6e7681 !important; }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: #161b22;
+      padding: 20px 30px;
+      border-radius: 10px;
+      text-align: center;
+      width: 350px;
+    }
+
+    button {
+      background-color: #238636;
+      border: none;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      margin: 5px;
+    }
+
+    .close-btn { background-color: #6e7681; }
+
+    .intensity-box {
+      padding: 10px 15px;
+      background-color: #21262d;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+      width: 60px;
+      text-align: center;
+    }
+
+    .intensity-box:hover { transform: scale(1.1); }
+
+    .intensity-box.low.selected  { background-color: #2ecc71; }
+    .intensity-box.mid.selected  { background-color: #f1c40f; color:black; }
+    .intensity-box.high.selected { background-color: #e74c3c; }
+  </style>
+</head>
+
+<body>
+  <div class="calendar-container">
+    <h1 id="month-title"></h1>
+    <div id="calendar-grid" class="calendar-grid"></div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <h2 id="modal-date"></h2>
+      <p>Did you work out?</p>
+
+      <button id="yes-btn">Yes</button>
+      <button id="no-btn">No</button>
+
+      <div id="intensity-section" style="display:none; margin-top:15px;">
+        <label>Select Intensity:</label>
+        <div style="display:flex; gap:10px; justify-content:center; margin:10px 0;">
+          <div class="intensity-box low"  data-value="30">Low</div>
+          <div class="intensity-box mid"  data-value="60">Mid</div>
+          <div class="intensity-box high" data-value="100">High</div>
+        </div>
+        <button id="submit-btn">Submit</button>
+      </div>
+
+      <button class="close-btn" id="close-btn">Close</button>
+    </div>
+  </div>
+
+  <script>
+    let workoutMap = {};
+
+    async function loadWorkouts() {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/workouts");
+        const data = await response.json();
+
+        data.forEach(item => {
+          if (item.date_) {
+            workoutMap[item.date_] = Number(item.intensity ?? 0);
+          }
+        });
+
+        console.log("Mapped:", workoutMap);
+      } catch (err) {
+        console.error("Error loading workouts:", err);
+      }
+    }
+
+    async function generateCalendar() {
+      await loadWorkouts();
+
+      const calendarGrid = document.getElementById("calendar-grid");
+      const monthTitle = document.getElementById("month-title");
+
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = today.getMonth();
+
+      const monthNames = [
+        "January","February","March","April","May","June",
+        "July","August","September","October","November","December"
+      ];
+      monthTitle.textContent = `${monthNames[month]} ${year}`;
+
+      let firstDay = new Date(year, month, 1).getDay();
+      firstDay = (firstDay === 0 ? 6 : firstDay - 1);
+
+      const totalDays = new Date(year, month + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i++) {
+        const emptyBox = document.createElement("div");
+        emptyBox.classList.add("day-box");
+        calendarGrid.appendChild(emptyBox);
+      }
+
+      for (let i = 1; i <= totalDays; i++) {
+        const dayBox = document.createElement("div");
+        dayBox.classList.add("day-box");
+        dayBox.textContent = i;
+
+        const d = new Date(year, month, i);
+        const dateString = d.toLocaleDateString("en-CA");
+
+        if (workoutMap[dateString] !== undefined) {
+          const intensity = workoutMap[dateString];
+
+          dayBox.classList.remove("low-day", "mid-day", "high-day", "rest-day");
+          if (intensity === 0) dayBox.classList.add("rest-day");
+          if (intensity === 30) dayBox.classList.add("low-day");
+          if (intensity === 60) dayBox.classList.add("mid-day");
+          if (intensity === 100) dayBox.classList.add("high-day");
+        }
+
+        dayBox.addEventListener("click", () => openModal(year, month, i, dayBox));
+        calendarGrid.appendChild(dayBox);
+      }
+    }
+
+    const modal = document.getElementById("modal");
+    const modalDate = document.getElementById("modal-date");
+    const intensitySection = document.getElementById("intensity-section");
+
+    let selectedDayBox = null;
+    let selectedDate = null;
+    let workedOut = null;
+    let selectedIntensity = null;
+
+    function openModal(year, month, day, element) {
+      selectedDayBox = element;
+
+      const dt = new Date(year, month, day);
+      selectedDate = dt.toLocaleDateString("en-CA");
+
+      modalDate.textContent = `Date: ${selectedDate}`;
+      modal.style.display = "flex";
+
+      intensitySection.style.display = "none";
+      workedOut = null;
+      selectedIntensity = null;
+      document.querySelectorAll(".intensity-box").forEach(b => b.classList.remove("selected"));
+    }
+
+    document.getElementById("yes-btn").addEventListener("click", () => {
+      workedOut = true;
+      intensitySection.style.display = "block";
+    });
+
+    document.getElementById("no-btn").addEventListener("click", async () => {
+      await postData(selectedDate, false, 0);
+
+      selectedDayBox.classList.remove("low-day", "mid-day", "high-day", "rest-day");
+      selectedDayBox.classList.add("rest-day");
+      workoutMap[selectedDate] = 0;
+      modal.style.display = "none";
+    });
+
+    document.querySelectorAll(".intensity-box").forEach((box) => {
+      box.addEventListener("click", () => {
+        document.querySelectorAll(".intensity-box").forEach(b => b.classList.remove("selected"));
+        box.classList.add("selected");
+        selectedIntensity = parseInt(box.dataset.value);
+      });
+    });
+
+    document.getElementById("submit-btn").addEventListener("click", async () => {
+      if (!selectedIntensity) {
+        alert("Select intensity!");
+        return;
+      }
+
+      await postData(selectedDate, workedOut, selectedIntensity);
+
+      selectedDayBox.classList.remove("low-day", "mid-day", "high-day", "rest-day");
+      if (selectedIntensity === 30) selectedDayBox.classList.add("low-day");
+      if (selectedIntensity === 60) selectedDayBox.classList.add("mid-day");
+      if (selectedIntensity === 100) selectedDayBox.classList.add("high-day");
+
+      workoutMap[selectedDate] = selectedIntensity;
+
+      modal.style.display = "none";
+    });
+
+    document.getElementById("close-btn").addEventListener("click", () => {
+      modal.style.display="none";
+    });
+
+    async function postData(date, worked_out, intensity) {
+      const res = await fetch("http://127.0.0.1:8000/workout", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          "date_": date,
+          "worked_out": worked_out,
+          "intensity": intensity
+        })
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        alert(error.detail);
+        throw new Error(error.detail);
+      }
+    }
+
+    generateCalendar();
+  </script>
+</body>
+</html>
