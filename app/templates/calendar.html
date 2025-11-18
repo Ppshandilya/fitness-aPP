@@ -49,11 +49,9 @@
       cursor: pointer;
     }
 
-    /* Intensity colors */
-    .low-day  { background-color: #2ecc71 !important; }
-    .mid-day  { background-color: #f1c40f !important; color:black; }
-    .high-day { background-color: #e74c3c !important; }
-    .rest-day { background-color: #6e7681 !important; }
+    /* Color classes */
+    .green-day { background-color: #2ecc71 !important; }
+    .rest-day  { background-color: #6e7681 !important; }
 
     /* Modal */
     .modal {
@@ -98,10 +96,7 @@
     }
 
     .intensity-box:hover { transform: scale(1.1); }
-
-    .intensity-box.low.selected  { background-color: #2ecc71; }
-    .intensity-box.mid.selected  { background-color: #f1c40f; color:black; }
-    .intensity-box.high.selected { background-color: #e74c3c; }
+    .intensity-box.selected { outline: 2px solid #fff; }
   </style>
 </head>
 
@@ -123,9 +118,9 @@
       <div id="intensity-section" style="display:none; margin-top:15px;">
         <label>Select Intensity:</label>
         <div style="display:flex; gap:10px; justify-content:center; margin:10px 0;">
-          <div class="intensity-box low"  data-value="30">Low</div>
-          <div class="intensity-box mid"  data-value="60">Mid</div>
-          <div class="intensity-box high" data-value="100">High</div>
+          <div class="intensity-box" data-value="30">Low</div>
+          <div class="intensity-box" data-value="60">Mid</div>
+          <div class="intensity-box" data-value="100">High</div>
         </div>
         <button id="submit-btn">Submit</button>
       </div>
@@ -192,11 +187,8 @@
         if (workoutMap[dateString] !== undefined) {
           const intensity = workoutMap[dateString];
 
-          dayBox.classList.remove("low-day", "mid-day", "high-day", "rest-day");
+          if (intensity > 0) dayBox.classList.add("green-day");
           if (intensity === 0) dayBox.classList.add("rest-day");
-          if (intensity === 30) dayBox.classList.add("low-day");
-          if (intensity === 60) dayBox.classList.add("mid-day");
-          if (intensity === 100) dayBox.classList.add("high-day");
         }
 
         dayBox.addEventListener("click", () => openModal(year, month, i, dayBox));
@@ -236,13 +228,13 @@
     document.getElementById("no-btn").addEventListener("click", async () => {
       await postData(selectedDate, false, 0);
 
-      selectedDayBox.classList.remove("low-day", "mid-day", "high-day", "rest-day");
+      selectedDayBox.classList.remove("green-day");
       selectedDayBox.classList.add("rest-day");
       workoutMap[selectedDate] = 0;
       modal.style.display = "none";
     });
 
-    document.querySelectorAll(".intensity-box").forEach((box) => {
+    document.querySelectorAll(".intensity-box").forEach((box) => {s
       box.addEventListener("click", () => {
         document.querySelectorAll(".intensity-box").forEach(b => b.classList.remove("selected"));
         box.classList.add("selected");
@@ -258,10 +250,8 @@
 
       await postData(selectedDate, workedOut, selectedIntensity);
 
-      selectedDayBox.classList.remove("low-day", "mid-day", "high-day", "rest-day");
-      if (selectedIntensity === 30) selectedDayBox.classList.add("low-day");
-      if (selectedIntensity === 60) selectedDayBox.classList.add("mid-day");
-      if (selectedIntensity === 100) selectedDayBox.classList.add("high-day");
+      selectedDayBox.classList.remove("rest-day");
+      selectedDayBox.classList.add("green-day");
 
       workoutMap[selectedDate] = selectedIntensity;
 

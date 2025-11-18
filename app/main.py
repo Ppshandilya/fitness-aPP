@@ -45,12 +45,28 @@ def past_workouts(db: Session = Depends(get_db)):
 
 
 @app.get("/", response_class=HTMLResponse)
-def show_form(request: Request, db: Session = Depends(get_db)):
+def show_form():
+    #workouts = past_workouts(db)
+    return render_html('templates/calendar.html')
+                # #return templates.TemplateResponse(
+    #     "calendar.html",
+    #     {"request": request, "workouts": workouts}
+    # )
+
+
+
+@app.get("/workouts")
+def workouts(request: Request, db: Session = Depends(get_db)):
     workouts = past_workouts(db)
-    return templates.TemplateResponse(
-        "calendar.html",
-        {"request": request, "workouts": workouts}
-    )
+    return [
+        {
+            "date_": w.date,
+        
+        }
+        for w in workouts
+    ]
+    
+    #return render_html('templates.calendar.html')
 
 #{date_: "2025-11-11", worked_out: true, intensity: 50}
 from datetime import date
