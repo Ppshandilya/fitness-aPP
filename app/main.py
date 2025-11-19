@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, Body
 from pydantic import BaseModel
 from typing import List
 from sqlalchemy.orm import Session
-from database import get_db
+from app.database import get_db
 #from models import * 
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from fastapi.responses import FileResponse
 import os
 from fastapi.staticfiles import StaticFiles
-from models.workout import Workout
+from app.models.workout import Workout
 from fastapi import Response,Request
 # from circles import *
 # from check import *
