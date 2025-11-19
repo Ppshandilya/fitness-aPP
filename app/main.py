@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 
 from fastapi.responses import HTMLResponse
-
+from datetime import datetime, timedelta
 from fastapi.responses import FileResponse
 import os
 from fastapi.staticfiles import StaticFiles
@@ -54,6 +54,28 @@ def show_form():
     # )
 
 
+
+from datetime import date
+
+@app.get("/week")
+def workouts(db: Session = Depends(get_db)):
+    today = datetime.today().date()
+    earlier_7_days = today - timedelta(days=7)
+    workouts=past_workouts(db)
+    #import pdb; pdb.set_trace()
+    if not workouts:
+        return 0
+
+    count = 0
+    for w in workouts:
+        workout_date = datetime.strptime(w.date, "%Y-%m-%d").date()   
+        #import pdb; pdb.set_trace()
+        if workout_date >= earlier_7_days:
+            count += 1
+    print("Days worked:", count//7*100)
+    #import pdb; pdb.set_trace()
+    return round((count / 7) * 100, 2)
+  
 
 @app.get("/workouts")
 def workouts(request: Request, db: Session = Depends(get_db)):

@@ -12,17 +12,105 @@
       font-family: "Segoe UI", sans-serif;
       display: flex;
       justify-content: center;
-      align-items: center;
-      height: 100vh;
+      padding: 40px;
     }
 
     .calendar-container {
       text-align: center;
+      width: 100%;
+      max-width: 100vw;
+      position: relative;
     }
 
-    #month-title {
+    #year-title {
       font-size: 3rem;
-      margin-bottom: 2rem;
+      margin-bottom: 10px;
+    }
+
+    #stats-container {
+      display: flex;
+      gap: 40px;
+      justify-content: center;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+
+    .stat-block {
+      text-align: center;
+      min-width: 120px;
+    }
+
+    .progress-circle {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: conic-gradient(#2ecc71 var(--progress, 0deg), #444 var(--progress, 0deg));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: auto;
+      position: relative;
+      transition: 0.7s ease;
+    }
+
+    .progress-inner {
+      width: 125px;
+      height: 125px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .circle-btn {
+      width: 125px;
+      height: 125px;
+      border-radius: 50%;
+      background-color: #4a7dff;
+      border: none;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.4s ease;
+    }
+
+    .circle-btn:hover {
+      background-color: #2f6bff;
+    }
+
+    #year-calendar {
+      display: flex;
+      flex-direction: row;
+      gap: 40px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      white-space: nowrap;
+      padding: 20px 0;
+    }
+
+    #year-calendar::-webkit-scrollbar {
+      height: 10px;
+    }
+
+    #year-calendar::-webkit-scrollbar-thumb {
+      background: #30363d;
+      border-radius: 10px;
+    }
+
+    .month-container {
+      width: 450px;
+      scroll-snap-align: center;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px;
+      background-color: #0d1117;
+      box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
     }
 
     .calendar-grid {
@@ -30,6 +118,7 @@
       grid-template-columns: repeat(7, 60px);
       gap: 10px;
       justify-content: center;
+      margin-top: 15px;
     }
 
     .day-box {
@@ -37,27 +126,27 @@
       height: 50px;
       border-radius: 10px;
       background-color: #161b22;
-      transition: all 0.3s ease;
+      transition: 0.3s;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 1.2rem;
     }
 
-    .day-box:hover {
-      transform: scale(1.2);
-      cursor: pointer;
-    }
-
-    /* Color classes */
+    .day-box:hover { transform: scale(1.2); cursor:pointer; }
     .green-day { background-color: #2ecc71 !important; }
-    .rest-day  { background-color: #6e7681 !important; }
+    .rest-day { background-color: #6e7681 !important; }
 
-    /* Modal */
+    .today-highlight { animation: flash 1s ease-in-out 3; outline: 3px solid #ffcc00; }
+
+    @keyframes flash { 50% { transform: scale(1.25); opacity: 0.5; } }
+
     .modal {
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       background: rgba(0, 0, 0, 0.7);
       display: none;
       justify-content: center;
@@ -68,8 +157,8 @@
       background: #161b22;
       padding: 20px 30px;
       border-radius: 10px;
-      text-align: center;
       width: 350px;
+      text-align: center;
     }
 
     button {
@@ -79,7 +168,6 @@
       padding: 10px 15px;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 1rem;
       margin: 5px;
     }
 
@@ -90,20 +178,42 @@
       background-color: #21262d;
       border-radius: 8px;
       cursor: pointer;
-      transition: 0.3s;
       width: 60px;
       text-align: center;
+      transition: 0.3s;
     }
 
-    .intensity-box:hover { transform: scale(1.1); }
-    .intensity-box.selected { outline: 2px solid #fff; }
+    .intensity-box.selected { outline: 2px solid white; }
+
+    #nav-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 15px;
+    }
+
+    #current-btn {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      background-color: #0070f3;
+    }
   </style>
 </head>
 
 <body>
   <div class="calendar-container">
-    <h1 id="month-title"></h1>
-    <div id="calendar-grid" class="calendar-grid"></div>
+    <h1 id="year-title"></h1>
+    <div id="stats-container"></div>
+
+    <button id="current-btn">Current 🔥</button>
+
+    <div id="nav-buttons">
+      <button id="prev-btn">⬅ Prev</button>
+      <button id="next-btn">Next ➡</button>
+    </div>
+
+    <div id="year-calendar"></div>
   </div>
 
   <!-- Modal -->
@@ -133,154 +243,247 @@
     let workoutMap = {};
 
     async function loadWorkouts() {
-      try {
-        const response = await fetch("http://127.0.0.1:8000/workouts");
-        const data = await response.json();
-
-        data.forEach(item => {
-          if (item.date_) {
-            workoutMap[item.date_] = Number(item.intensity ?? 0);
-          }
-        });
-
-        console.log("Mapped:", workoutMap);
-      } catch (err) {
-        console.error("Error loading workouts:", err);
-      }
+      const res = await fetch("http://127.0.0.1:8000/workouts");
+      const data = await res.json();
+      data.forEach(item => {
+        if (item.date_) workoutMap[item.date_] = Number(item.intensity ?? 0);
+      });
     }
 
-    async function generateCalendar() {
-      await loadWorkouts();
+    function isLeapYear(y) {
+      return (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0);
+    }
 
-      const calendarGrid = document.getElementById("calendar-grid");
-      const monthTitle = document.getElementById("month-title");
-
+    function calculateStats() {
       const today = new Date();
       const year = today.getFullYear();
       const month = today.getMonth();
+
+      const startOfWeek = new Date(today);
+      const dow = startOfWeek.getDay();
+      startOfWeek.setHours(0, 0, 0, 0);
+      startOfWeek.setDate(startOfWeek.getDate() - dow);
+
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(endOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
+
+      let wW = 0, wM = 0, wY = 0;
+
+      Object.entries(workoutMap).forEach(([dateStr, intensity]) => {
+        if (intensity > 0) {
+          const [y, m, d] = dateStr.split("-").map(Number);
+          const dt = new Date(y, m - 1, d);
+
+          if (dt >= startOfWeek && dt <= endOfWeek) wW++;
+          if (dt.getFullYear() === year && dt.getMonth() === month) wM++;
+          if (dt.getFullYear() === year) wY++;
+        }
+      });
+
+      const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+      const totalDaysInYear = isLeapYear(year) ? 366 : 365;
+
+      return {
+        week:  { ratio: wW / 7,                worked: wW, total: 7 },
+        month: { ratio: wM / totalDaysInMonth, worked: wM, total: totalDaysInMonth },
+        year:  { ratio: wY / totalDaysInYear,  worked: wY, total: totalDaysInYear }
+      };
+    }
+
+    function renderStats() {
+      const statsContainer = document.getElementById("stats-container");
+      statsContainer.innerHTML = "";
+
+      const stats = calculateStats();
+
+      const blocks = [
+        { label: "This Week",  endpoint: "/week", data: stats.week },
+        { label: "This Month", endpoint: "/month-consistency", data: stats.month },
+        { label: "This Year",  endpoint: "/year-consistency", data: stats.year }
+      ];
+
+      blocks.forEach(({ label, endpoint, data }) => {
+        const percent = Math.round(data.ratio * 100);
+        const div = document.createElement("div");
+        div.classList.add("stat-block");
+
+        div.innerHTML = `
+          <div class="progress-circle" style="--progress:${percent * 3.6}deg;">
+            <div class="progress-inner">
+              <button class="circle-btn get-btn" data-endpoint="${endpoint}">Get</button>
+            </div>
+          </div>
+          <p style="margin-top:10px;">${label}</p>
+          <small>${data.worked}/${data.total} days</small>
+        `;
+
+        statsContainer.appendChild(div);
+      });
+    }
+
+    /* ====================== UPDATED GET BUTTON HANDLER ====================== */
+    document.addEventListener("click", async (e) => {
+      if (e.target.classList.contains("get-btn")) {
+        const endpoint = e.target.dataset.endpoint;
+        try {
+          const res = await fetch("http://127.0.0.1:8000" + endpoint);
+          const percentage = await res.json(); // expecting raw int
+
+          // Update button text to show percentage
+          e.target.textContent = percentage + "%";
+
+          // Update circle progress visualization
+          const circle = e.target.closest(".progress-circle");
+          circle.style.setProperty("--progress", `${percentage * 3.6}deg`);
+
+        } catch (err) {
+          console.error(err);
+          alert("Error calling API");
+        }
+      }
+    });
+
+    async function generateCalendarYear() {
+      await loadWorkouts();
+      renderStats();
+
+      const yearCalendar = document.getElementById("year-calendar");
+      const yearTitle = document.getElementById("year-title");
+
+      const now = new Date();
+      const year = now.getFullYear();
+      yearTitle.textContent = year;
 
       const monthNames = [
         "January","February","March","April","May","June",
         "July","August","September","October","November","December"
       ];
-      monthTitle.textContent = `${monthNames[month]} ${year}`;
 
-      let firstDay = new Date(year, month, 1).getDay();
-      firstDay = (firstDay === 0 ? 6 : firstDay - 1);
+      for (let month = 0; month < 12; month++) {
+        const container = document.createElement("div");
+        container.classList.add("month-container");
 
-      const totalDays = new Date(year, month + 1, 0).getDate();
+        const title = document.createElement("h2");
+        title.textContent = monthNames[month];
+        container.appendChild(title);
 
-      for (let i = 0; i < firstDay; i++) {
-        const emptyBox = document.createElement("div");
-        emptyBox.classList.add("day-box");
-        calendarGrid.appendChild(emptyBox);
-      }
+        const grid = document.createElement("div");
+        grid.classList.add("calendar-grid");
 
-      for (let i = 1; i <= totalDays; i++) {
-        const dayBox = document.createElement("div");
-        dayBox.classList.add("day-box");
-        dayBox.textContent = i;
+        let firstDay = new Date(year, month, 1).getDay();
+        firstDay = (firstDay === 0 ? 6 : firstDay - 1);
 
-        const d = new Date(year, month, i);
-        const dateString = d.toLocaleDateString("en-CA");
+        const totalDays = new Date(year, month + 1, 0).getDate();
 
-        if (workoutMap[dateString] !== undefined) {
-          const intensity = workoutMap[dateString];
-
-          if (intensity > 0) dayBox.classList.add("green-day");
-          if (intensity === 0) dayBox.classList.add("rest-day");
+        for (let i = 0; i < firstDay; i++) {
+          const empty = document.createElement("div");
+          empty.classList.add("day-box");
+          grid.appendChild(empty);
         }
 
-        dayBox.addEventListener("click", () => openModal(year, month, i, dayBox));
-        calendarGrid.appendChild(dayBox);
+        for (let day = 1; day <= totalDays; day++) {
+          const box = document.createElement("div");
+          box.classList.add("day-box");
+          box.textContent = day;
+
+          const date = new Date(year, month, day);
+          const key = date.toLocaleDateString("en-CA");
+
+          if (workoutMap[key] !== undefined) {
+            if (workoutMap[key] > 0) box.classList.add("green-day");
+            else box.classList.add("rest-day");
+          }
+
+          box.addEventListener("click", () => openModal(year, month, day, box));
+          grid.appendChild(box);
+        }
+
+        container.appendChild(grid);
+        yearCalendar.appendChild(container);
       }
     }
 
+    /* Modal + CRUD logic unchanged */
     const modal = document.getElementById("modal");
     const modalDate = document.getElementById("modal-date");
     const intensitySection = document.getElementById("intensity-section");
-
     let selectedDayBox = null;
     let selectedDate = null;
-    let workedOut = null;
     let selectedIntensity = null;
 
-    function openModal(year, month, day, element) {
-      selectedDayBox = element;
-
-      const dt = new Date(year, month, day);
-      selectedDate = dt.toLocaleDateString("en-CA");
-
+    function openModal(year, month, day, box) {
+      selectedDayBox = box;
+      selectedDate = new Date(year, month, day).toLocaleDateString("en-CA");
       modalDate.textContent = `Date: ${selectedDate}`;
       modal.style.display = "flex";
-
       intensitySection.style.display = "none";
-      workedOut = null;
       selectedIntensity = null;
       document.querySelectorAll(".intensity-box").forEach(b => b.classList.remove("selected"));
     }
 
-    document.getElementById("yes-btn").addEventListener("click", () => {
-      workedOut = true;
-      intensitySection.style.display = "block";
-    });
+    document.getElementById("yes-btn").onclick = () => intensitySection.style.display = "block";
 
-    document.getElementById("no-btn").addEventListener("click", async () => {
+    document.getElementById("no-btn").onclick = async () => {
       await postData(selectedDate, false, 0);
-
       selectedDayBox.classList.remove("green-day");
       selectedDayBox.classList.add("rest-day");
       workoutMap[selectedDate] = 0;
       modal.style.display = "none";
+      renderStats();
+    };
+
+    document.querySelectorAll(".intensity-box").forEach((b) => {
+      b.onclick = () => {
+        document.querySelectorAll(".intensity-box").forEach(x => x.classList.remove("selected"));
+        b.classList.add("selected");
+        selectedIntensity = Number(b.dataset.value);
+      };
     });
 
-    document.querySelectorAll(".intensity-box").forEach((box) => {s
-      box.addEventListener("click", () => {
-        document.querySelectorAll(".intensity-box").forEach(b => b.classList.remove("selected"));
-        box.classList.add("selected");
-        selectedIntensity = parseInt(box.dataset.value);
-      });
-    });
-
-    document.getElementById("submit-btn").addEventListener("click", async () => {
-      if (!selectedIntensity) {
-        alert("Select intensity!");
-        return;
-      }
-
-      await postData(selectedDate, workedOut, selectedIntensity);
-
+    document.getElementById("submit-btn").onclick = async () => {
+      if (!selectedIntensity) return alert("Select intensity!");
+      await postData(selectedDate, true, selectedIntensity);
       selectedDayBox.classList.remove("rest-day");
       selectedDayBox.classList.add("green-day");
-
       workoutMap[selectedDate] = selectedIntensity;
-
       modal.style.display = "none";
-    });
+      renderStats();
+    };
 
-    document.getElementById("close-btn").addEventListener("click", () => {
-      modal.style.display="none";
-    });
+    document.getElementById("close-btn").onclick = () => modal.style.display = "none";
 
-    async function postData(date, worked_out, intensity) {
-      const res = await fetch("http://127.0.0.1:8000/workout", {
+    async function postData(date, worked, intensity) {
+      await fetch("http://127.0.0.1:8000/workout", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          "date_": date,
-          "worked_out": worked_out,
-          "intensity": intensity
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date_: date, worked_out: worked, intensity: intensity })
       });
-
-      if (!res.ok) {
-        const error = await res.json();
-        alert(error.detail);
-        throw new Error(error.detail);
-      }
     }
 
-    generateCalendar();
+    const yearCal = document.getElementById("year-calendar");
+
+    document.getElementById("prev-btn").onclick = () => yearCal.scrollBy({ left: -500, behavior: "smooth" });
+    document.getElementById("next-btn").onclick = () => yearCal.scrollBy({ left: 500, behavior: "smooth" });
+
+    document.getElementById("current-btn").onclick = () => {
+      const today = new Date();
+      const month = today.getMonth();
+      const day = today.getDate();
+
+      const monthEl = document.querySelectorAll(".month-container")[month];
+      if (!monthEl) return;
+
+      monthEl.scrollIntoView({ behavior: "smooth", inline: "center" });
+
+      const dateBox = [...monthEl.querySelectorAll(".day-box")].find(el => el.textContent == day);
+      if (dateBox) {
+        dateBox.classList.add("today-highlight");
+        setTimeout(() => dateBox.classList.remove("today-highlight"), 3000);
+      }
+    };
+
+    generateCalendarYear();
   </script>
 </body>
 </html>

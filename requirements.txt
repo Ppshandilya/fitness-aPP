@@ -6,4 +6,15 @@ sqlalchemy
 PyMySQL
 fastapi
 uvicorn
-openai
+#openai 
+fastapi
+uvicorn
+# tensorflow
+# tensorflow_hub
+# pillow
+numpy
+fastapi
+uvicorn
+sqlalchemy  # if using
+jinja2
+pydantic
