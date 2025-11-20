@@ -7,7 +7,7 @@
 
   <style>
     body {
-      background-color: #0d1117;
+      background-color: #000000; /* pure black */
       color: white;
       font-family: "Segoe UI", sans-serif;
       display: flex;
@@ -40,49 +40,57 @@
       min-width: 120px;
     }
 
+        /* Progress Circle with spacing */
+    /* Perfect circular progress ring */
     .progress-circle {
-      width: 140px;
-      height: 140px;
-      border-radius: 50%;
-      background: conic-gradient(#2ecc71 var(--progress, 0deg), #444 var(--progress, 0deg));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: auto;
-      position: relative;
-      transition: 0.7s ease;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: conic-gradient(#2ecc71 var(--progress, 0deg), #444 var(--progress, 0deg));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+    position: relative;
+    transition: 0.7s ease;
+    box-sizing: border-box;
     }
 
+    /* Inner circle spacing from ring */
     .progress-inner {
-      width: 125px;
-      height: 125px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      position: relative;
+    width: 94px;
+    height: 94px;
+    background-color: #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
     }
 
+    /* Button perfectly circular */
     .circle-btn {
-      width: 125px;
-      height: 125px;
-      border-radius: 50%;
-      background-color: #4a7dff;
-      border: none;
-      color: white;
-      font-size: 1.1rem;
-      font-weight: bold;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: 0.4s ease;
+    width: 94px;
+    height: 94px;
+    border-radius: 50%;
+    background-color: #4a7dff;
+    border: none;
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.25s ease;
+    box-sizing: border-box;
     }
 
     .circle-btn:hover {
-      background-color: #2f6bff;
+    transform: scale(1.05);
+    background-color: #2f6bff;
     }
+
 
     #year-calendar {
       display: flex;
@@ -94,23 +102,14 @@
       padding: 20px 0;
     }
 
-    #year-calendar::-webkit-scrollbar {
-      height: 10px;
-    }
-
-    #year-calendar::-webkit-scrollbar-thumb {
-      background: #30363d;
-      border-radius: 10px;
-    }
-
     .month-container {
       width: 450px;
       scroll-snap-align: center;
-      border: 1px solid #30363d;
+      border: 1px solid #222;
       border-radius: 12px;
       padding: 20px;
-      background-color: #0d1117;
-      box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
+      background-color: #0a0a0a;
+      box-shadow: 0 0 12px rgba(0, 255, 0, 0.15);
     }
 
     .calendar-grid {
@@ -134,8 +133,12 @@
     }
 
     .day-box:hover { transform: scale(1.2); cursor:pointer; }
-    .green-day { background-color: #2ecc71 !important; }
-    .rest-day { background-color: #6e7681 !important; }
+
+    .green-day {
+      background-color: #2ecc71 !important;
+      box-shadow: 0 0 15px rgba(46, 204, 113, 0.9);
+      transform: scale(1.05);
+    }
 
     .today-highlight { animation: flash 1s ease-in-out 3; outline: 3px solid #ffcc00; }
 
@@ -271,7 +274,7 @@
       let wW = 0, wM = 0, wY = 0;
 
       Object.entries(workoutMap).forEach(([dateStr, intensity]) => {
-        if (intensity > 0) {
+        if (intensity >= 0) { // persisted means green
           const [y, m, d] = dateStr.split("-").map(Number);
           const dt = new Date(y, m - 1, d);
 
@@ -285,9 +288,9 @@
       const totalDaysInYear = isLeapYear(year) ? 366 : 365;
 
       return {
-        week:  { ratio: wW / 7,                worked: wW, total: 7 },
+        week: { ratio: wW / 7, worked: wW, total: 7 },
         month: { ratio: wM / totalDaysInMonth, worked: wM, total: totalDaysInMonth },
-        year:  { ratio: wY / totalDaysInYear,  worked: wY, total: totalDaysInYear }
+        year: { ratio: wY / totalDaysInYear, worked: wY, total: totalDaysInYear }
       };
     }
 
@@ -298,9 +301,9 @@
       const stats = calculateStats();
 
       const blocks = [
-        { label: "This Week",  endpoint: "/week", data: stats.week },
+        { label: "This Week", endpoint: "/week-consistency", data: stats.week },
         { label: "This Month", endpoint: "/month-consistency", data: stats.month },
-        { label: "This Year",  endpoint: "/year-consistency", data: stats.year }
+        { label: "This Year", endpoint: "/year-consistency", data: stats.year }
       ];
 
       blocks.forEach(({ label, endpoint, data }) => {
@@ -317,26 +320,19 @@
           <p style="margin-top:10px;">${label}</p>
           <small>${data.worked}/${data.total} days</small>
         `;
-
         statsContainer.appendChild(div);
       });
     }
 
-    /* ====================== UPDATED GET BUTTON HANDLER ====================== */
     document.addEventListener("click", async (e) => {
       if (e.target.classList.contains("get-btn")) {
         const endpoint = e.target.dataset.endpoint;
         try {
           const res = await fetch("http://127.0.0.1:8000" + endpoint);
-          const percentage = await res.json(); // expecting raw int
-
-          // Update button text to show percentage
+          const percentage = await res.json();
           e.target.textContent = percentage + "%";
-
-          // Update circle progress visualization
           const circle = e.target.closest(".progress-circle");
           circle.style.setProperty("--progress", `${percentage * 3.6}deg`);
-
         } catch (err) {
           console.error(err);
           alert("Error calling API");
@@ -391,8 +387,7 @@
           const key = date.toLocaleDateString("en-CA");
 
           if (workoutMap[key] !== undefined) {
-            if (workoutMap[key] > 0) box.classList.add("green-day");
-            else box.classList.add("rest-day");
+            box.classList.add("green-day");
           }
 
           box.addEventListener("click", () => openModal(year, month, day, box));
@@ -404,7 +399,6 @@
       }
     }
 
-    /* Modal + CRUD logic unchanged */
     const modal = document.getElementById("modal");
     const modalDate = document.getElementById("modal-date");
     const intensitySection = document.getElementById("intensity-section");
@@ -426,8 +420,7 @@
 
     document.getElementById("no-btn").onclick = async () => {
       await postData(selectedDate, false, 0);
-      selectedDayBox.classList.remove("green-day");
-      selectedDayBox.classList.add("rest-day");
+      selectedDayBox.classList.add("green-day");
       workoutMap[selectedDate] = 0;
       modal.style.display = "none";
       renderStats();
@@ -444,7 +437,6 @@
     document.getElementById("submit-btn").onclick = async () => {
       if (!selectedIntensity) return alert("Select intensity!");
       await postData(selectedDate, true, selectedIntensity);
-      selectedDayBox.classList.remove("rest-day");
       selectedDayBox.classList.add("green-day");
       workoutMap[selectedDate] = selectedIntensity;
       modal.style.display = "none";
@@ -463,8 +455,11 @@
 
     const yearCal = document.getElementById("year-calendar");
 
-    document.getElementById("prev-btn").onclick = () => yearCal.scrollBy({ left: -500, behavior: "smooth" });
-    document.getElementById("next-btn").onclick = () => yearCal.scrollBy({ left: 500, behavior: "smooth" });
+    document.getElementById("prev-btn").onclick = () =>
+      yearCal.scrollBy({ left: -500, behavior: "smooth" });
+
+    document.getElementById("next-btn").onclick = () =>
+      yearCal.scrollBy({ left: 500, behavior: "smooth" });
 
     document.getElementById("current-btn").onclick = () => {
       const today = new Date();
@@ -476,7 +471,9 @@
 
       monthEl.scrollIntoView({ behavior: "smooth", inline: "center" });
 
-      const dateBox = [...monthEl.querySelectorAll(".day-box")].find(el => el.textContent == day);
+      const dateBox = [...monthEl.querySelectorAll(".day-box")]
+        .find(el => el.textContent == day);
+
       if (dateBox) {
         dateBox.classList.add("today-highlight");
         setTimeout(() => dateBox.classList.remove("today-highlight"), 3000);

@@ -26,7 +26,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
 
@@ -47,7 +47,7 @@ def past_workouts(db: Session = Depends(get_db)):
 @app.get("/", response_class=HTMLResponse)
 def show_form():
     #workouts = past_workouts(db)
-    return render_html('templates/calendar.html')
+    return render_html('app/templates/calendar.html')
                 # #return templates.TemplateResponse(
     #     "calendar.html",
     #     {"request": request, "workouts": workouts}
@@ -57,7 +57,7 @@ def show_form():
 
 from datetime import date
 
-@app.get("/week")
+@app.get("/week-consistency")
 def workouts(db: Session = Depends(get_db)):
     today = datetime.today().date()
     earlier_7_days = today - timedelta(days=7)
@@ -75,6 +75,26 @@ def workouts(db: Session = Depends(get_db)):
     print("Days worked:", count//7*100)
     #import pdb; pdb.set_trace()
     return round((count / 7) * 100, 2)
+
+
+@app.get("/month-consistency")
+def workouts(db: Session = Depends(get_db)):
+    #import pdb; pdb.set_trace()
+    today = date.today()
+    month_start = date(today.year, today.month, 1)
+    workouts=past_workouts(db)
+    if not workouts:
+        return 0
+
+    count = 0
+    for w in workouts:
+        workout_date = datetime.strptime(w.date, "%Y-%m-%d").date()   
+        #import pdb; pdb.set_trace()
+        if workout_date >= month_start:
+            count += 1
+    print("Days worked:", count//7*100)
+    #import pdb; pdb.set_trace()
+    return round((count / 30) * 100, 2)
   
 
 @app.get("/workouts")
