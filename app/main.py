@@ -8,6 +8,8 @@ from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 
+
+from fastapi import Cookie
 from fastapi.responses import HTMLResponse
 from datetime import datetime, timedelta
 from fastapi.responses import FileResponse
@@ -15,6 +17,10 @@ import os
 from fastapi.staticfiles import StaticFiles
 from app.models.workout import Workout
 from fastapi import Response,Request
+#from app.main import app
+from app.models.users import Accounts
+import uvicorn
+
 # from circles import *
 # from check import *
 app = FastAPI()
@@ -25,8 +31,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+#import pdb; pdb.set_trace()
 
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.mount("/static", StaticFiles(directory="app/static/images"), name="static")
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
 
@@ -44,7 +51,37 @@ def past_workouts(db: Session = Depends(get_db)):
     return workout_detail
 
 
-@app.get("/", response_class=HTMLResponse)
+
+
+@app.get("/login", response_class=HTMLResponse)
+def show_form():
+    return render_html('app/templates/login.html')
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+
+#import pdb; pdb.set_trace()
+@app.post("/verify-login", response_model=None)
+def verify_form(login: UserLogin, 
+                response: Response,
+                db: Session=Depends(get_db),
+                ):
+    
+    res=db.query(Accounts).filter(login.username==Accounts.login_name).first()
+    if res:
+        response.set_cookie(key="auth_code", value="X#!@", httponly=True)
+        return {"success": True}
+    else:
+        raise HTTPException(status_code=404, detail="Invalid credentials")
+
+
+def verify_access(auth_code: str = Cookie(None)):
+    if auth_code != "X#!@":
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+@app.get("/", response_class=HTMLResponse, dependencies=[Depends(verify_access)])
 def show_form():
     #workouts = past_workouts(db)
     return render_html('app/templates/calendar.html')
@@ -52,6 +89,48 @@ def show_form():
     #     "calendar.html",
     #     {"request": request, "workouts": workouts}
     # )
+
+#import requests
+from fastapi.responses import FileResponse
+
+
+@app.get("/upload-img")
+def upload_img():
+    #import pdb; pdb.set_trace()
+    #image_url = "http://127.0.0.1:8000/static/download.jpg"
+    # return FileResponse(
+    #     "app/static/images/download.jpg",
+    #     media_type="image/jpeg"
+    # )
+    import pdb; pdb.set_trace()
+    return FileResponse(
+        "app/static/images/test.csv",
+        media_type="text/csv",
+        filename="test.csv"
+    )
+    
+
+
+# RAZORPAY_KEY_ID = "rzp_test_1234567890abcdef"       # replace with your Test Key ID
+# RAZORPAY_KEY_SECRET = "your_secret_key_here"       # replace with your Test Key Secret
+
+# client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+
+
+# @app.get("/pay")
+# def create_payment():
+#     # Create an order of Rs.100 (amount is in paise)
+#     order = client.order.create({
+#         "amount": 10000,       # 100 INR
+#         "currency": "INR",
+#         "payment_capture": 1   # automatic capture
+#     })
+
+#     # Redirect URL to Razorpay checkout page
+#     payment_url = f"https://checkout.razorpay.com/v1/checkout.js?order_id={order['id']}"
+
+#     return RedirectResponse(url=payment_url)
+
 
 
 
@@ -145,4 +224,5 @@ def workout_detail(workout: WorkoutData, db: Session = Depends(get_db)):
     except Exception as e:
         return {"detail": e}
 
-
+if __name__ == "__main__":
+    uvicorn.run(app, host="localhost", port=8000)

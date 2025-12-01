@@ -15,6 +15,30 @@
       padding: 40px;
     }
 
+    /* BUY NOW BUTTON */
+    #buy-now-btn {
+      position: fixed;
+      left: 25px;
+      top: 7%;
+      transform: translateY(-50%);
+      padding: 14px 22px;
+      background-color: #ff2e63;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      z-index: 2000;
+      transition: 0.3s ease;
+      box-shadow: 0 0 10px rgba(255, 46, 99, 0.7);
+    }
+
+    #buy-now-btn:hover {
+      background-color: #ff1b50;
+      transform: translateY(-50%) scale(1.08);
+    }
+
     .calendar-container {
       text-align: center;
       width: 100%;
@@ -40,57 +64,52 @@
       min-width: 120px;
     }
 
-        /* Progress Circle with spacing */
-    /* Perfect circular progress ring */
     .progress-circle {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    background: conic-gradient(#2ecc71 var(--progress, 0deg), #444 var(--progress, 0deg));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: auto;
-    position: relative;
-    transition: 0.7s ease;
-    box-sizing: border-box;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: conic-gradient(#2ecc71 var(--progress, 0deg), #444 var(--progress, 0deg));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: auto;
+      position: relative;
+      transition: 0.7s ease;
+      box-sizing: border-box;
     }
 
-    /* Inner circle spacing from ring */
     .progress-inner {
-    width: 94px;
-    height: 94px;
-    background-color: #000;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
+      width: 94px;
+      height: 94px;
+      background-color: #000;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
     }
 
-    /* Button perfectly circular */
     .circle-btn {
-    width: 94px;
-    height: 94px;
-    border-radius: 50%;
-    background-color: #4a7dff;
-    border: none;
-    color: white;
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: 0.25s ease;
-    box-sizing: border-box;
+      width: 94px;
+      height: 94px;
+      border-radius: 50%;
+      background-color: #4a7dff;
+      border: none;
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.25s ease;
+      box-sizing: border-box;
     }
 
     .circle-btn:hover {
-    transform: scale(1.05);
-    background-color: #2f6bff;
+      transform: scale(1.05);
+      background-color: #2f6bff;
     }
-
 
     #year-calendar {
       display: flex;
@@ -205,6 +224,11 @@
 </head>
 
 <body>
+
+  <!-- BUY NOW BUTTON -->
+  <button id="buy-now-btn">Upload</button>
+  <img id="preview-img" style="display:none; position:fixed; left:25px; top:13%; width:120px; border-radius:12px; border:2px solid #ff2e63; z-index:3000;" />
+
   <div class="calendar-container">
     <h1 id="year-title"></h1>
     <div id="stats-container"></div>
@@ -243,7 +267,29 @@
   </div>
 
   <script>
+    
     let workoutMap = {};
+
+    document.getElementById("buy-now-btn").onclick = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/upload-img", {
+          method: "GET"
+        });
+
+        const blob = await response.blob();
+        const imageUrl = URL.createObjectURL(blob);
+
+        console.log("Image loaded:", imageUrl);
+
+        const preview = document.getElementById("preview-img");
+        preview.src = imageUrl;
+        preview.style.display = "block";
+
+      } catch (err) {
+        console.error("Error calling upload-img:", err);
+        alert("Error occurred");
+      }
+    };
 
     async function loadWorkouts() {
       const res = await fetch("http://127.0.0.1:8000/workouts");
@@ -274,7 +320,7 @@
       let wW = 0, wM = 0, wY = 0;
 
       Object.entries(workoutMap).forEach(([dateStr, intensity]) => {
-        if (intensity >= 0) { // persisted means green
+        if (intensity >= 0) {
           const [y, m, d] = dateStr.split("-").map(Number);
           const dt = new Date(y, m - 1, d);
 
