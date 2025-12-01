@@ -15,6 +15,7 @@ RDS_ENDPOINT = "database-2.cjyoeqqiqelm.eu-north-1.rds.amazonaws.com"
 RDS_USER = "admin"
 RDS_PASSWORD_ENCODED= "TXJpbmFsMDEwOA=="
 RDS_DB = "local_copy"
+#import pdb; pdb.set_trace()
 RDS_PASSWORD = base64.b64decode(RDS_PASSWORD_ENCODED).decode()
 engine = create_engine(
     f"mysql+pymysql://{RDS_USER}:{RDS_PASSWORD}@{RDS_ENDPOINT}/{RDS_DB}"

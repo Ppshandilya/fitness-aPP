@@ -1,20 +1,9 @@
 fastapi
 uvicorn
-logging 
-mysqlclient
 sqlalchemy
-PyMySQL
-fastapi
-uvicorn
-#openai 
-fastapi
-uvicorn
-# tensorflow
-# tensorflow_hub
-# pillow
-numpy
-fastapi
-uvicorn
-sqlalchemy  # if using
+pymysql
+mysqlclient
 jinja2
 pydantic
+numpy
+logging
