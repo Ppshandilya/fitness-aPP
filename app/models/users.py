@@ -2,7 +2,7 @@ from fastapi import FastAPI, APIRouter
 from fastapi.responses import HTMLResponse
 
 from typing import Dict
-from app.database import get_db
+from app.database import get_db,engine
 from pydantic import BaseModel
 
 from sqlalchemy import Column, Integer, String,Boolean,ForeignKey,Text,create_engine
@@ -20,7 +20,7 @@ class Accounts(Base):
     
 
 
-engine = create_engine("mysql+pymysql://root:Mrinal@localhost/mysql")
+#engine = create_engine("mysql+pymysql://root:Mrinal@localhost/mysql")
 
 
 #Base.metadata.drop_all(bind=engine)

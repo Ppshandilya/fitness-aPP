@@ -21,7 +21,7 @@ engine = create_engine(
     f"mysql+pymysql://{RDS_USER}:{RDS_PASSWORD}@{RDS_ENDPOINT}/{RDS_DB}"
 )
 
-#engine = create_engine("mysql+pymysql://root:Mrinal@localhost/mysql")
+
 SessionLocal = sessionmaker(bind=engine)
 
 def get_db():
