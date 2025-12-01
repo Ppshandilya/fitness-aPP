@@ -3,10 +3,11 @@ import MySQLdb
 from contextlib import contextmanager
 import base64
 
-SessionLocal = sessionmaker(bind=engine)
+
 
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
+
 
 
 # RDS connection details
