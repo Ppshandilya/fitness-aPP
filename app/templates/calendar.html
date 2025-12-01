@@ -272,7 +272,7 @@
 
     document.getElementById("buy-now-btn").onclick = async () => {
       try {
-        const response = await fetch("http://fitness-app-5-j152.onrender.com:8000/upload-img", {
+        const response = await fetch("https://fitness-app-5-j152.onrender.com:8000/upload-img", {
           method: "GET"
         });
 
@@ -292,7 +292,7 @@
     };
 
     async function loadWorkouts() {
-      const res = await fetch("http://fitness-app-5-j152.onrender.com:8000/workouts");
+      const res = await fetch("https://fitness-app-5-j152.onrender.com:8000/workouts");
       const data = await res.json();
       data.forEach(item => {
         if (item.date_) workoutMap[item.date_] = Number(item.intensity ?? 0);
@@ -374,7 +374,7 @@
       if (e.target.classList.contains("get-btn")) {
         const endpoint = e.target.dataset.endpoint;
         try {
-          const res = await fetch("http://fitness-app-5-j152.onrender.com:8000" + endpoint);
+          const res = await fetch("https://fitness-app-5-j152.onrender.com:8000" + endpoint);
           const percentage = await res.json();
           e.target.textContent = percentage + "%";
           const circle = e.target.closest(".progress-circle");
@@ -492,7 +492,7 @@
     document.getElementById("close-btn").onclick = () => modal.style.display = "none";
 
     async function postData(date, worked, intensity) {
-      await fetch("http://fitness-app-5-j152.onrender.com:8000/workout", {
+      await fetch("https://fitness-app-5-j152.onrender.com:8000/workout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ date_: date, worked_out: worked, intensity: intensity })
